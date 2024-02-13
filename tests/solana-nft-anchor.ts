@@ -10,7 +10,7 @@ import {
   MPL_TOKEN_METADATA_PROGRAM_ID,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
-import { publicKey } from "@metaplex-foundation/umi";
+import { createGenericFile, publicKey } from "@metaplex-foundation/umi";
 
 import {
   TOKEN_PROGRAM_ID,
@@ -21,15 +21,36 @@ describe("solana-nft-anchor", async () => {
   // Configured the client to use the devnet cluster.
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
-  const program = anchor.workspace
-    .SolanaNftAnchor as Program<SolanaNftAnchor>;
+  const program = anchor.workspace.SolanaNftAnchor as Program<SolanaNftAnchor>;
 
   const signer = provider.wallet;
 
-  const umi = createUmi("https://api.devnet.solana.com")
-    .use(walletAdapterIdentity(signer))
-    .use(mplTokenMetadata());
+  const umi = createUmi ("https://api.devnet.solana.com");
+  umi.use(nftStorageUploader({ token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDVCNmJkNDM2MUQ1MkIyRTYxYTg5MWU3QWI1MEY4OGJFYTlEQmRjQTAiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTcwNzg1NzkzNzczMCwibmFtZSI6ImNhbHlwIn0.dW4hkh1ifNLg8W00u9rVHmDN7tT8y80d3mZn7UtdJgo" }));
 
+
+const imageBuffer = readFileSync('/home/toriel/nft-storage-quickstart/dog.jpg')
+async function uploader() {
+  const [imageUri] = await umi.uploader.upload([
+    createGenericFile(imageBuffer, "dog.jpg"),
+  ]);
+
+  // Upload the JSON metadata.
+  const uri = await umi.uploader.uploadJson({
+    name: 'NFT #1',
+    description: 'description 1',
+    image: imageUri,
+  })
+  console.log("uri", uri);
+}
+
+uploader();
+  
+  //("https://api.devnet.solana.com")
+   // .use(walletAdapterIdentity(signer))
+    //.use(mplTokenMetadata());
+
+    // generate the mint account
   const mint = anchor.web3.Keypair.generate();
 
   // Derive the associated token address account for the mint
@@ -80,3 +101,13 @@ describe("solana-nft-anchor", async () => {
     );
   });
 });
+export { SolanaNftAnchor };
+
+  function readFileSync(arg0: string) {
+    throw new Error("Function not implemented.");
+  }
+
+function nftStorageUploader(arg0: { token: string; }): import("@metaplex-foundation/umi").UmiPlugin {
+  throw new Error("Function not implemented.");
+}
+
