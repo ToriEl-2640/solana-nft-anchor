@@ -4,16 +4,22 @@ use anchor_spl::{
     metadata::{
         create_master_edition_v3,
         create_metadata_accounts_v3,
-        mpl_token_metadata::types::DataV2,
+        //mpl_token_metadata::types::DataV2,
         CreateMasterEditionV3,
         CreateMetadataAccountsV3,
         Metadata,
-    },
+        //MetadataAccount,
+    }, //new
     token::{ mint_to, Mint, MintTo, Token, TokenAccount },
 };
-use mpl_token_metadata::accounts::{ MasterEdition, Metadata as MetadataAccount };
+use mpl_token_metadata::{
+    pda::{find_master_edition_account, find_metadata_account}, // new
+    state::DataV2  // new
+};
+   // MasterEdition, Metadata as MetadataAccount };
+//use anchor_spl::token::Mint;
 
-declare_id!("<UPDATE HERE>");
+declare_id!("FfQMVKXYJxasEq4yRJFcd3HVYtpbqMUbiAdLCYXxVtHo");
 #[program]
 pub mod solana_nft_anchor {
     use super::*;
@@ -29,9 +35,11 @@ pub mod solana_nft_anchor {
             mint: ctx.accounts.mint.to_account_info(),
             to: ctx.accounts.associated_token_account.to_account_info(),
             authority: ctx.accounts.signer.to_account_info(),
-        });
+        },
+    );
 
         mint_to(cpi_context, 1)?;
+        
 
         // create metadata account
         let cpi_context = CpiContext::new(
@@ -47,7 +55,7 @@ pub mod solana_nft_anchor {
             }
         );
 
-        let data_v2 = DataV2 {
+        let DataV2 = data_V2 {
             name: name,
             symbol: symbol,
             uri: uri,
@@ -57,7 +65,7 @@ pub mod solana_nft_anchor {
             uses: None,
         };
 
-        create_metadata_accounts_v3(cpi_context, data_v2, false, true, None)?;
+        create_metadata_accounts_v3(cpi_context, DataV2, false, true, None)?;
 
         //create master edition account
         let cpi_context = CpiContext::new(
@@ -93,30 +101,32 @@ pub struct InitNFT<'info> {
         mint::authority = signer.key(),
         mint::freeze_authority = signer.key()
     )]
-    pub mint: Account<'info, Mint>,
+   // mint: Account<'info, Mint>, 
+
+    pub mint: Account<'info, Mint>, // new
     #[account(
         init_if_needed,
         payer = signer,
         associated_token::mint = mint,
         associated_token::authority = signer
     )]
-    pub associated_token_account: Account<'info, TokenAccount>,
+    pub associated_token_account: Account<'info, TokenAccount>, // new
     /// CHECK - address
     #[account(
         mut,
-        address = MetadataAccount::find_pda(&mint.key()).0,
+        address =find_metadata_account(&mint.key()).0,
     )]
-    pub metadata_account: AccountInfo<'info>,
-    /// CHECK: address
+    pub metadata_account: AccountInfo<'info>, //new
+    /// CHECK: Here accounts are defined even if they were not strictly checked before they were implemented.
     #[account(
         mut,
-        address = MasterEdition::find_pda(&mint.key()).0,
+        address=find_master_edition_account(&mint.key()).0,
     )]
-    pub master_edition_account: AccountInfo<'info>,
+    pub master_edition_account: AccountInfo<'info>, //new
 
-    pub token_program: Program<'info, Token>,
-    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_program: Program<'info, Token>, // new
+    pub associated_token_program: Program<'info, AssociatedToken>, // new
     pub token_metadata_program: Program<'info, Metadata>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
+    pub rent: Sysvar<'info, Rent> // new
 }
